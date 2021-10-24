@@ -6,6 +6,8 @@ Rails.application.routes.draw do
       post :new_contact
       put :update_contact
       put :soft_delete
+      put :restore
+      put :overwrite
     end
   end
 end

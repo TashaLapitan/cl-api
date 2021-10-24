@@ -1,5 +1,5 @@
 class Contact < ApplicationRecord
   has_many :change_log, :dependent => :delete_all
 
-  scope :active, -> {where(is_active: true)}
+  scope :active, -> {where(is_active: true).order(:last_name)}
 end

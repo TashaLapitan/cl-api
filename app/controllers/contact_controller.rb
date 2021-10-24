@@ -60,6 +60,29 @@ class ContactController < ApplicationController
     render json: {'success': true, status: :ok}
   end
 
+  #[PUT]
+  def restore
+    @contact = contact_with_valid_id(params[:contact_id])
+    if @contact.blank?
+      return
+    end
+    @contact.update!({is_active: true})
+    ChangeLog.create!({contact_id: @contact.id, details: "Restored"})
+
+    render json: with_history(@contact)
+  end
+
+  #[PUT]
+  def overwrite
+    @contact = contact_with_valid_id(params[:contact_id])
+    if @contact.blank?
+      return
+    end
+    @contact.destroy!
+
+    create_new_contact(params)
+  end
+
   #SHARED METHODS
   def create_new_contact(new_contact = nil)
     if new_contact[:first_name].blank? || new_contact[:last_name].blank? || new_contact[:email].blank? || new_contact[:phone_number].blank?
