@@ -1,3 +1,9 @@
 Rails.application.routes.draw do
-  # For details on the DSL available within this file, see https://guides.rubyonrails.org/routing.html
+
+  resources :contact do
+    collection do
+      get :all_active
+      post :new_contact
+    end
+  end
 end
