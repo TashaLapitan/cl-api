@@ -36,7 +36,7 @@ class ContactController < ApplicationController
 
     new_info = {}
     @changeable_fields.each do |key|
-      if params[key].present? && params[key] != @contact[key.to_s]
+      if params[key] != @contact[key.to_s]
         new_info[key] = params[key]
       end
     end
