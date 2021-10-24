@@ -1,4 +1,5 @@
 class ContactController < ApplicationController
+  before_action :declare_changeable_params, :only => :update_contact
 
   #[GET]
   def all_active
@@ -21,6 +22,44 @@ class ContactController < ApplicationController
     create_new_contact(params)
   end
 
+  #[PUT]
+  def update_contact
+
+    @contact = contact_with_valid_id(params[:contact_id])
+    if @contact.blank?
+      return
+    end
+
+    unless params[:email] === @contact.email
+      render json: {'error': "You cannot change a contact's email"} and return
+    end
+
+    new_info = {}
+    @changeable_fields.each do |key|
+      if params[key].present? && params[key] != @contact[key.to_s]
+        new_info[key] = params[key]
+      end
+    end
+
+    @contact.update!(new_info)
+    ChangeLog.create!({contact_id: @contact.id,
+                       details: "Updated: #{new_info.keys.map{|key| "new #{key.to_s.split("_").join(" ")} - #{new_info[key]}"}.join(", ")}"})
+
+    render json: with_history(@contact)
+  end
+
+  #[PUT]
+  def soft_delete
+    @contact = contact_with_valid_id(params[:contact_id])
+    if @contact.blank?
+      return
+    end
+    @contact.update!({ is_active: false })
+    ChangeLog.create!({contact_id: @contact.id, details: "Deactivated"})
+
+    render json: {'success': true, status: :ok}
+  end
+
   #SHARED METHODS
   def create_new_contact(new_contact = nil)
     if new_contact[:first_name].blank? || new_contact[:last_name].blank? || new_contact[:email].blank? || new_contact[:phone_number].blank?
@@ -40,10 +79,27 @@ class ContactController < ApplicationController
     render json: with_history(@contact)
   end
 
-  private
+  def contact_with_valid_id(contact_id = nil)
+
+    unless contact_id.present?
+      render json: {'error': 'Please provide a valid contact ID'} and return nil
+    end
+
+    @contact = Contact.find_by(id: params[:contact_id])
+    if @contact.blank?
+      render json: {'error': 'Please provide a valid contact ID'} and return nil
+    end
+    @contact
+  end
 
   def with_history(contact)
     contact.as_json(include: {change_log: { only: [:created_at, :details] }})
+  end
+
+  private
+
+  def declare_changeable_params
+    @changeable_fields = [:first_name, :last_name, :phone_number, :comment]
   end
 
 end
