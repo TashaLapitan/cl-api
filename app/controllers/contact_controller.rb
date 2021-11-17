@@ -84,12 +84,13 @@ class ContactController < ApplicationController
   end
 
   #SHARED METHODS
-  def create_new_contact(new_contact = nil)
+  def create_new_contact(new_contact)
     if new_contact[:first_name].blank? || new_contact[:last_name].blank? || new_contact[:email].blank? || new_contact[:phone_number].blank?
       render json: {'error': "Please provide valid data (first name, last name, email and phone number)"}, status: :bad_request and return
     end
 
-    comment = new_contact[:comment].present? ? new_contact[:comment] : nil
+    comment = new_contact[:comment] unless new_contact[:comment].blank?
+
     @contact = Contact.create!({first_name: new_contact[:first_name],
                                 last_name: new_contact[:last_name],
                                 email: new_contact[:email],
@@ -97,12 +98,13 @@ class ContactController < ApplicationController
                                 comment: comment,
                                 is_active: true})
 
-    ChangeLog.create!({contact_id: @contact[:id], details: "Created contact: #{@contact[:first_name]} #{@contact[:last_name]}, #{@contact[:email]}, #{@contact[:phone_number]}"})
+    ChangeLog.create!({contact_id: @contact[:id],
+                       details: "Created contact: #{@contact[:first_name]} #{@contact[:last_name]}, #{@contact[:email]}, #{@contact[:phone_number]}"})
 
     render json: with_history(@contact)
   end
 
-  def contact_with_valid_id(contact_id = nil)
+  def contact_with_valid_id(contact_id)
 
     unless contact_id.present?
       render json: {'error': 'Please provide a valid contact ID'} and return nil
